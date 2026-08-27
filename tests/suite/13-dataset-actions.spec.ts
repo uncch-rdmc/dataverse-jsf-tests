@@ -60,17 +60,24 @@ test(
     await page.getByRole("button", { name: "Save Changes" }).last().click();
 
     // ─── Test #9 — Edit File Metadata ───
-    // Wait for the file table to be visible first
+    // Wait for the page to fully settle after the metadata save navigation.
+    // PrimeFaces DataTable event handlers are wired after DOM is visible, so
+    // waiting for networkidle ensures the AJAX cycle has completed before we
+    // interact with the select-all checkbox.
+    await page.waitForLoadState("networkidle");
+
+    // Wait for the file table to be visible and attached
     await page.waitForSelector(".ui-chkbox-all", { state: "visible" });
 
-    // Click the select-all checkbox and wait for it to be checked
+    // Click the inner .ui-chkbox-box — that is the actual interactive element
+    // in PrimeFaces; clicking the outer .ui-chkbox-all container is unreliable.
     const selectAllCheckbox = page.locator(".ui-chkbox-all").first();
-    await selectAllCheckbox.click();
+    const checkboxBox = selectAllCheckbox.locator(".ui-chkbox-box");
+    await checkboxBox.scrollIntoViewIfNeeded();
+    await checkboxBox.click();
 
     // Wait for the checkbox to actually be in checked state
-    await expect(selectAllCheckbox.locator(".ui-chkbox-box")).toHaveClass(
-      /ui-state-active/,
-    );
+    await expect(checkboxBox).toHaveClass(/ui-state-active/);
 
     // Wait for Edit Files button to be enabled and visible
     const editFilesButton = page.getByRole("button", { name: "Edit Files" });
