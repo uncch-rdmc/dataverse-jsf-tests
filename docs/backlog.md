@@ -58,7 +58,7 @@
 
 | # | Test Case | Badge | Reason / Notes | Priority |
 |---|-----------|-------|----------------|----------|
-| — | _No items yet_ | — | — | — |
+| X-GB-01 | **Guestbook CSV column verification** — After downloading the all-responses CSV in test 07, parse the file and assert the expected column headers are present (Name, Email, Institution, Position, custom question text, etc.) | ⏳ **Deferred** | Download is verified non-null today; column-level assertions require reading and parsing the downloaded file. Deferred to a follow-up sprint. | Medium |
 
 ---
 
