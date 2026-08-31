@@ -59,6 +59,7 @@
 | # | Test Case | Badge | Reason / Notes | Priority |
 |---|-----------|-------|----------------|----------|
 | X-GB-01 | **Guestbook CSV column verification** — After downloading the all-responses CSV in test 07, parse the file and assert the expected column headers are present (Name, Email, Institution, Position, custom question text, etc.) | ⏳ **Deferred** | Download is verified non-null today; column-level assertions require reading and parsing the downloaded file. Deferred to a follow-up sprint. | Medium |
+| X-DE-01 | **Data Exploration — Data Explorer + File Previewer** — Upload a CSV to trigger tabular ingest, click the Explore button to verify Data Explorer loads; click a text file to verify File Previewer loads. | 🚫 **Not Automatable** (this config) | Data Explorer and File Previewer are ASF optional features not enabled by default on the target instance. Automation requires a cloak function that lives in a separate repository with a different suite config. Revisit once that cloak function is available and the feature is confirmed enabled on the target. | High — revisit when cloak function is integrated |
 
 ---
 
