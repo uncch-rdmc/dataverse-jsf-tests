@@ -41,3 +41,24 @@ export function readCustomTerms(): string {
   }
   return fs.readFileSync(CUSTOM_TERMS_FILE, "utf-8").trim();
 }
+
+// ── Locally FAIR dataverse identifier ────────────────────────────────────────
+
+const FAIR_DATAVERSE_ID_FILE = path.resolve(
+  process.cwd(),
+  ".regression-fair-dataverse-id",
+);
+
+export function writeFairDataverseId(id: string): void {
+  fs.writeFileSync(FAIR_DATAVERSE_ID_FILE, id, "utf-8");
+}
+
+export function readFairDataverseId(): string {
+  if (!fs.existsSync(FAIR_DATAVERSE_ID_FILE)) {
+    throw new Error(
+      `Regression FAIR dataverse ID file not found at:\n  ${FAIR_DATAVERSE_ID_FILE}\n` +
+        `Run the regression test from the beginning to generate it.`,
+    );
+  }
+  return fs.readFileSync(FAIR_DATAVERSE_ID_FILE, "utf-8").trim();
+}

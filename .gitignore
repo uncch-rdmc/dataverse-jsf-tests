@@ -4,6 +4,7 @@
 # Regression suite runtime state
 .regression-template-name
 .regression-custom-terms
+.regression-fair-dataverse-id
 
 # Logs
 logs
