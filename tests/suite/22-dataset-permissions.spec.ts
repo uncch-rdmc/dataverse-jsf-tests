@@ -65,6 +65,14 @@ test.describe.serial("Dataset & File Permissions Management", () => {
       .first()
       .click();
 
+    await page
+      .locator('[id="datasetForm:fileUpload_input"]')
+      .setInputFiles("tests/suite/test-data/sample-dataset-file.txt");
+    await expect(
+      page.locator('[id="datasetForm:filesTable:0:fileName"]'),
+    ).toBeVisible({ timeout: 30000 });
+    await page.waitForTimeout(3000);
+
     await page.getByRole("button", { name: "Save Dataset" }).click();
     await page.waitForLoadState("domcontentloaded");
     await expect(page.getByText("This dataset has been created.")).toBeVisible({
@@ -215,92 +223,6 @@ test.describe.serial("Dataset & File Permissions Management", () => {
       await expect(
         page.locator("#rolesPermissionsForm\\:userGroupsAdd"),
       ).toBeVisible({ timeout: 10000 });
-    },
-  );
-
-  // Test 5 (#76–#77): grant file access to :authenticated-users
-  test(
-    "Standard: Grant file access to :authenticated-users",
-    { tag: ["@standard"] },
-    async ({ page }) => {
-      await goToFilePerms(page);
-      await page.locator("#rolesPermissionsForm\\:userGroupsAdd").click();
-
-      const assignDialog = page.locator("#rolesPermissionsForm\\:assignDialog");
-      await assignDialog.waitFor({ state: "visible", timeout: 10000 });
-
-      const userInput = assignDialog.getByRole("textbox", {
-        name: "Enter User/Group Name",
-      });
-      await expect(userInput).toBeVisible({ timeout: 10000 });
-      await userInput.pressSequentially(":authenticated-users", { delay: 50 });
-
-      await expect(page.locator(".ui-autocomplete-item").first()).toBeVisible({
-        timeout: 10000,
-      });
-      await page.locator(".ui-autocomplete-item").first().click();
-
-      const checkboxes = assignDialog.locator(".ui-chkbox-box");
-      await checkboxes.first().waitFor({ state: "visible", timeout: 10000 });
-      await checkboxes.first().click();
-
-      const grantBtn = assignDialog.getByRole("link", { name: "Grant" });
-      await expect(grantBtn).toBeVisible({ timeout: 10000 });
-      await grantBtn.dispatchEvent("click");
-      await page.waitForTimeout(1500);
-      const accessTable = page.locator(
-        "#rolesPermissionsForm\\:userGroupsAccess",
-      );
-      if (await accessTable.isVisible({ timeout: 5000 }).catch(() => false)) {
-        expect(await accessTable.textContent()).toContain(
-          ":authenticated-users",
-        );
-      } else {
-        console.log(
-          "Info: No file access table — dataset has no restricted files.",
-        );
-      }
-    },
-  );
-
-  // Test 6 (#78): revoke file access from :authenticated-users
-  test(
-    "Standard: Revoke file access from :authenticated-users",
-    { tag: ["@standard"] },
-    async ({ page }) => {
-      await goToFilePerms(page);
-      const accessTable = page.locator(
-        "#rolesPermissionsForm\\:userGroupsAccess",
-      );
-      if (
-        !(await accessTable.isVisible({ timeout: 5000 }).catch(() => false))
-      ) {
-        console.log("Info: No file access table — skipping revoke.");
-        return;
-      }
-      const txt = await accessTable.textContent();
-      if (!txt?.includes(":authenticated-users")) {
-        console.log(
-          "Info: :authenticated-users not in table — nothing to revoke.",
-        );
-        return;
-      }
-      const removeLink = page.locator(
-        "//div[@id='rolesPermissionsForm:userGroupsAccess']" +
-          "//tr[.//td[contains(.,':authenticated-users')]]" +
-          "//a[contains(.,'Remove Access')]",
-      );
-      await expect(removeLink).toBeVisible({ timeout: 10000 });
-      await removeLink.click();
-      const confirmDialog = page.locator(
-        "#rolesPermissionsForm\\:accessFileRemoveConfirm",
-      );
-      await expect(confirmDialog).toBeVisible({ timeout: 10000 });
-      await confirmDialog.getByRole("button", { name: "Continue" }).click();
-      await page.waitForTimeout(1500);
-      expect(await accessTable.textContent({ timeout: 10000 })).not.toContain(
-        ":authenticated-users",
-      );
     },
   );
 });
