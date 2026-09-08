@@ -105,7 +105,7 @@ authoritative reference when writing Playwright specs.
 |---|---|
 | Assign Roles button | `#rolesPermissionsForm\\:userGroupsAdd` |
 | Assign Role dialog | `#rolesPermissionsForm\\:userGroupDialog` |
-| User/Group input | `#rolesPermissionsForm\\:userGroupNameAssign_input` |
+| User/Group input | `#rolesPermissionsForm\\:userGroupNameAssign\:userGroupAutoComplete_input` |
 | Autocomplete suggestion | `.ui-autocomplete-item` first |
 | Role radio label | XPath: `//label[normalize-space(.)='{role}']` |
 | Role radio box | XPath: `//input[@id='{id}']/ancestor::div[contains(@class,'ui-radiobutton')]//div[contains(@class,'ui-radiobutton-box')]` |
@@ -121,7 +121,7 @@ authoritative reference when writing Playwright specs.
 |---|---|
 | Grant Access button | `#rolesPermissionsForm\\:userGroupsAdd` |
 | Grant File Access dialog | `#rolesPermissionsForm\\:assignDialog` |
-| User/Group input | `#rolesPermissionsForm\\:userGroupNameAssign_input` |
+| User/Group input | `#rolesPermissionsForm\\:userGroupNameAssign\:userGroupAutoComplete_input` |
 | Autocomplete suggestion | `.ui-autocomplete-item` first |
 | File checkboxes in dialog | `.ui-chkbox-box` inside dialog (index 0 = select-all header) |
 | Grant button | XPath: `//div[@id='rolesPermissionsForm:assignDialog']//a[contains(.,'Grant')]` |

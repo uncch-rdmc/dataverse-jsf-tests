@@ -37,27 +37,54 @@ test.describe.serial("File Access Control", () => {
       await page.getByRole("button", { name: "Add Data" }).click();
       await page.getByRole("link", { name: "New Dataset" }).click();
       await page.waitForLoadState("domcontentloaded");
-      await page.locator('[id$=":0:inputText"]').first()
+      await page
+        .locator('[id$=":0:inputText"]')
+        .first()
         .fill(`File Access Test — Public ${suffix}`);
-      await page.locator('[id$=":0:description"]').first()
+      await page
+        .locator('[id$=":0:description"]')
+        .first()
         .fill("Unrestricted dataset for file access tests.");
-      await page.locator(".ui-selectcheckboxmenu-multiple-container").first().click();
-      await page.locator(".ui-selectcheckboxmenu-items-wrapper").first()
-        .getByText("Other").click();
-      await page.locator(".ui-selectcheckboxmenu-multiple-container").first().click();
-      await page.locator('[id="datasetForm:fileUpload_input"]')
+      await page
+        .locator(".ui-selectcheckboxmenu-multiple-container")
+        .first()
+        .click();
+      await page
+        .locator(".ui-selectcheckboxmenu-items-wrapper")
+        .first()
+        .getByText("Other")
+        .click();
+      await page
+        .locator(".ui-selectcheckboxmenu-multiple-container")
+        .first()
+        .click();
+      await page
+        .locator('[id="datasetForm:fileUpload_input"]')
         .setInputFiles("tests/suite/test-data/sample-data.csv");
-      await expect(page.getByText("sample-data.csv", { exact: true }))
-        .toBeVisible({ timeout: 30000 });
+      await expect(
+        page.locator('[id="datasetForm:filesTable:0:fileName"]'),
+      ).toBeVisible({ timeout: 30000 });
       await page.waitForTimeout(3000);
       await page.getByRole("button", { name: "Save Dataset" }).click();
       await page.waitForLoadState("domcontentloaded");
-      await expect(page.getByText("This dataset has been created."))
-        .toBeVisible({ timeout: 30000 });
-      await page.getByRole("link", { name: "Publish Dataset" }).click();
-      await page.getByRole("button", { name: "Continue" }).click();
+      await expect(
+        page.getByText("This dataset has been created."),
+      ).toBeVisible({ timeout: 30000 });
+      await page.locator("a.btn-publish.dropdown-toggle").click();
+      const publishItem = page.locator(
+        "//ul[contains(@class,'dropdown-menu')]//a[normalize-space(.)='Publish']",
+      );
+      await expect(publishItem).toBeVisible({ timeout: 10000 });
+      await publishItem.click();
+      const publishDialog = page.locator("#datasetForm\\:publishDataset");
+      await expect(publishDialog).toBeVisible({ timeout: 10000 });
+      await publishDialog
+        .locator("#datasetForm\\:releaseDatasetButton")
+        .click();
       await page.waitForFunction(
-        () => !window.location.href.includes("version=DRAFT"), { timeout: 30000 });
+        () => !window.location.href.includes("version=DRAFT"),
+        { timeout: 30000 },
+      );
       unrestrictedUrl = page.url();
     }
 
@@ -108,7 +135,9 @@ test.describe.serial("File Access Control", () => {
 
       // Request Access button should be present for restricted files
       const requestAccessBtn = page.locator(".btn-request").first();
-      const hasRequestAccess = await requestAccessBtn.isVisible({ timeout: 10000 }).catch(() => false);
+      const hasRequestAccess = await requestAccessBtn
+        .isVisible({ timeout: 10000 })
+        .catch(() => false);
       if (!hasRequestAccess) {
         console.log(
           "Info: No Request Access button found — file may not be restricted. " +
@@ -136,7 +165,9 @@ test.describe.serial("File Access Control", () => {
       await page.waitForLoadState("domcontentloaded");
 
       const requestAccessBtn = page.locator(".btn-request").first();
-      const hasRequestAccess = await requestAccessBtn.isVisible({ timeout: 10000 }).catch(() => false);
+      const hasRequestAccess = await requestAccessBtn
+        .isVisible({ timeout: 10000 })
+        .catch(() => false);
       if (!hasRequestAccess) {
         console.log("Info: No Request Access button — cannot test popup flow.");
         await context.close();
@@ -146,9 +177,11 @@ test.describe.serial("File Access Control", () => {
       await requestAccessBtn.click();
 
       // The popup / modal for log-in should appear
-      const popup = page.locator(
-        "#datasetForm\\:accessSignUpLogIn, .modal.in, [id*='accessSignUp']",
-      ).first();
+      const popup = page
+        .locator(
+          "#datasetForm\\:accessSignUpLogIn, .modal.in, [id*='accessSignUp']",
+        )
+        .first();
       await expect(popup).toBeVisible({ timeout: 10000 });
 
       await context.close();
@@ -197,8 +230,12 @@ test.describe.serial("File Access Control", () => {
       const accessBtn = page.locator(".btn-access-file").first();
       const requestAccessBtn = page.locator(".btn-request").first();
 
-      const hasAccess = await accessBtn.isVisible({ timeout: 5000 }).catch(() => false);
-      const hasRequest = await requestAccessBtn.isVisible({ timeout: 5000 }).catch(() => false);
+      const hasAccess = await accessBtn
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+      const hasRequest = await requestAccessBtn
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
 
       // At minimum one of these should be present — the file table exists
       expect(hasAccess || hasRequest).toBe(true);
@@ -210,4 +247,3 @@ test.describe.serial("File Access Control", () => {
     },
   );
 });
-

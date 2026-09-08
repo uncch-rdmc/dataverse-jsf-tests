@@ -27,8 +27,6 @@ const suffix = Date.now().toString(36);
 test.describe.serial("Dataset & File Permissions Management", () => {
   let datasetUrl = "";
 
-  // ── Setup: create a temporary draft dataset ──────────────────────────────
-
   test.beforeAll(async ({ browser }) => {
     if (PERMISSIONS_DATASET_PID) {
       const base = process.env.BASE_URL ?? "";
@@ -44,26 +42,38 @@ test.describe.serial("Dataset & File Permissions Management", () => {
     await page.getByRole("link", { name: "New Dataset" }).click();
     await page.waitForLoadState("domcontentloaded");
 
-    await page.locator('[id$=":0:inputText"]').first()
+    await page
+      .locator('[id$=":0:inputText"]')
+      .first()
       .fill(`Permissions Test Dataset ${suffix}`);
-    await page.locator('[id$=":0:description"]').first()
+    await page
+      .locator('[id$=":0:description"]')
+      .first()
       .fill("Temporary dataset for permissions tests.");
 
-    await page.locator(".ui-selectcheckboxmenu-multiple-container").first().click();
-    await page.locator(".ui-selectcheckboxmenu-items-wrapper").first()
-      .getByText("Other").click();
-    await page.locator(".ui-selectcheckboxmenu-multiple-container").first().click();
+    await page
+      .locator(".ui-selectcheckboxmenu-multiple-container")
+      .first()
+      .click();
+    await page
+      .locator(".ui-selectcheckboxmenu-items-wrapper")
+      .first()
+      .getByText("Other")
+      .click();
+    await page
+      .locator(".ui-selectcheckboxmenu-multiple-container")
+      .first()
+      .click();
 
     await page.getByRole("button", { name: "Save Dataset" }).click();
     await page.waitForLoadState("domcontentloaded");
-    await expect(page.getByText("This dataset has been created."))
-      .toBeVisible({ timeout: 30000 });
+    await expect(page.getByText("This dataset has been created.")).toBeVisible({
+      timeout: 30000,
+    });
 
     datasetUrl = page.url();
     await context.close();
   });
-
-  // ── Teardown: delete created dataset ─────────────────────────────────────
 
   test.afterAll(async ({ browser }) => {
     if (!datasetUrl || PERMISSIONS_DATASET_PID) return;
@@ -74,15 +84,15 @@ test.describe.serial("Dataset & File Permissions Management", () => {
       await page.waitForLoadState("domcontentloaded");
       await page.locator("#editDataSet").click();
       await page.locator("#datasetForm\\:deleteDataset").click();
-      await page.locator("#datasetForm\\:deleteConfirmation")
-        .getByRole("button", { name: "Continue" }).click();
+      await page
+        .locator("#datasetForm\\:deleteConfirmation")
+        .getByRole("button", { name: "Continue" })
+        .click();
       await context.close();
     } catch {
       console.warn("afterAll: could not delete test dataset —", datasetUrl);
     }
   });
-
-  // ── Helper: navigate to dataset permissions page ──────────────────────────
 
   async function goToDatasetPerms(page: any) {
     await page.goto(datasetUrl);
@@ -94,11 +104,10 @@ test.describe.serial("Dataset & File Permissions Management", () => {
       .hover();
     await page.locator("#datasetForm\\:manageDatasetPermissions").click();
     await page.waitForURL(/permissions-manage\.xhtml/, { timeout: 15000 });
-    await expect(page.locator("#rolesPermissionsForm\\:userGroupsAdd"))
-      .toBeVisible({ timeout: 10000 });
+    await expect(
+      page.locator("#rolesPermissionsForm\\:userGroupsAdd"),
+    ).toBeVisible({ timeout: 10000 });
   }
-
-  // ── Helper: navigate to file permissions page ─────────────────────────────
 
   async function goToFilePerms(page: any) {
     await page.goto(datasetUrl);
@@ -109,9 +118,12 @@ test.describe.serial("Dataset & File Permissions Management", () => {
       .first()
       .hover();
     await page.locator("#datasetForm\\:manageFilePermissions").click();
-    await page.waitForURL(/permissions-manage-files\.xhtml/, { timeout: 15000 });
-    await expect(page.locator("#rolesPermissionsForm\\:userGroupsAdd"))
-      .toBeVisible({ timeout: 10000 });
+    await page.waitForURL(/permissions-manage-files\.xhtml/, {
+      timeout: 15000,
+    });
+    await expect(
+      page.locator("#rolesPermissionsForm\\:userGroupsAdd"),
+    ).toBeVisible({ timeout: 10000 });
   }
 
   // Test 1 (#72–#73): permissions page loads
@@ -120,7 +132,9 @@ test.describe.serial("Dataset & File Permissions Management", () => {
     { tag: ["@standard"] },
     async ({ page }) => {
       await goToDatasetPerms(page);
-      const rows = page.locator("#rolesPermissionsForm\\:assignedRoles_data tr");
+      const rows = page.locator(
+        "#rolesPermissionsForm\\:assignedRoles_data tr",
+      );
       await expect(rows.first()).toBeVisible({ timeout: 10000 });
       expect(await rows.count()).toBeGreaterThanOrEqual(1);
     },
@@ -134,17 +148,21 @@ test.describe.serial("Dataset & File Permissions Management", () => {
       await goToDatasetPerms(page);
       await page.locator("#rolesPermissionsForm\\:userGroupsAdd").click();
 
-      const userInput = page.locator(
-        "#rolesPermissionsForm\\:userGroupNameAssign_input",
+      const dialog = page.locator("#rolesPermissionsForm\\:userGroupDialog");
+      await dialog.waitFor({ state: "visible", timeout: 10000 });
+
+      const userInput = dialog.locator(
+        "input[id*='userGroupAutoComplete_input']",
       );
       await expect(userInput).toBeVisible({ timeout: 10000 });
-      await userInput.fill(":authenticated-users");
+      await userInput.pressSequentially(":authenticated-users", { delay: 50 });
 
-      await expect(page.locator(".ui-autocomplete-item").first())
-        .toBeVisible({ timeout: 10000 });
+      await expect(page.locator(".ui-autocomplete-item").first()).toBeVisible({
+        timeout: 10000,
+      });
       await page.locator(".ui-autocomplete-item").first().click();
 
-      const curatorLabel = page.locator("label", { hasText: "Curator" });
+      const curatorLabel = dialog.locator("label", { hasText: "Curator" });
       await expect(curatorLabel).toBeVisible({ timeout: 10000 });
       const inputId = await curatorLabel.getAttribute("for");
       await page
@@ -154,12 +172,7 @@ test.describe.serial("Dataset & File Permissions Management", () => {
         )
         .click();
 
-      await page
-        .locator(
-          "//div[@id='rolesPermissionsForm:userGroupDialog']" +
-            "//button[normalize-space(.)='Save Changes']",
-        )
-        .click();
+      await dialog.locator("button", { hasText: "Save Changes" }).click();
       await expect(userInput).not.toBeVisible({ timeout: 10000 });
 
       const tableText = await page
@@ -169,7 +182,6 @@ test.describe.serial("Dataset & File Permissions Management", () => {
       expect(tableText).toContain("Curator");
     },
   );
-
 
   // Test 3 (#74): remove Curator role
   test(
@@ -182,12 +194,10 @@ test.describe.serial("Dataset & File Permissions Management", () => {
       );
       await expect(removeLink).toBeVisible({ timeout: 10000 });
       await removeLink.click();
-      const confirmDialog = page.locator(
-        "#rolesPermissionsForm\\:removeRoleConfirmation",
-      );
-      if (await confirmDialog.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await confirmDialog.locator("button:not(.btn-link)").click();
-      }
+      await page
+        .getByRole("button", { name: "Continue" })
+        .waitFor({ state: "visible", timeout: 10000 });
+      await page.getByRole("button", { name: "Continue" }).click();
       await page.waitForTimeout(1500);
       const tableText = await page
         .locator("#rolesPermissionsForm\\:assignedRoles")
@@ -202,8 +212,9 @@ test.describe.serial("Dataset & File Permissions Management", () => {
     { tag: ["@standard"] },
     async ({ page }) => {
       await goToFilePerms(page);
-      await expect(page.locator("#rolesPermissionsForm\\:userGroupsAdd"))
-        .toBeVisible({ timeout: 10000 });
+      await expect(
+        page.locator("#rolesPermissionsForm\\:userGroupsAdd"),
+      ).toBeVisible({ timeout: 10000 });
     },
   );
 
@@ -214,30 +225,40 @@ test.describe.serial("Dataset & File Permissions Management", () => {
     async ({ page }) => {
       await goToFilePerms(page);
       await page.locator("#rolesPermissionsForm\\:userGroupsAdd").click();
-      const userInput = page.locator(
-        "#rolesPermissionsForm\\:userGroupNameAssign_input",
-      );
-      await expect(userInput).toBeVisible({ timeout: 10000 });
-      await userInput.fill(":authenticated-users");
-      await expect(page.locator(".ui-autocomplete-item").first())
-        .toBeVisible({ timeout: 10000 });
-      await page.locator(".ui-autocomplete-item").first().click();
+
       const assignDialog = page.locator("#rolesPermissionsForm\\:assignDialog");
+      await assignDialog.waitFor({ state: "visible", timeout: 10000 });
+
+      const userInput = assignDialog.getByRole("textbox", {
+        name: "Enter User/Group Name",
+      });
+      await expect(userInput).toBeVisible({ timeout: 10000 });
+      await userInput.pressSequentially(":authenticated-users", { delay: 50 });
+
+      await expect(page.locator(".ui-autocomplete-item").first()).toBeVisible({
+        timeout: 10000,
+      });
+      await page.locator(".ui-autocomplete-item").first().click();
+
       const checkboxes = assignDialog.locator(".ui-chkbox-box");
-      if ((await checkboxes.count()) > 0) {
-        await checkboxes.first().click();
-      }
-      const grantBtn = page.locator(
-        "//div[@id='rolesPermissionsForm:assignDialog']//a[contains(.,'Grant')]",
-      );
+      await checkboxes.first().waitFor({ state: "visible", timeout: 10000 });
+      await checkboxes.first().click();
+
+      const grantBtn = assignDialog.getByRole("link", { name: "Grant" });
       await expect(grantBtn).toBeVisible({ timeout: 10000 });
-      await grantBtn.click();
+      await grantBtn.dispatchEvent("click");
       await page.waitForTimeout(1500);
-      const accessTable = page.locator("#rolesPermissionsForm\\:userGroupsAccess");
+      const accessTable = page.locator(
+        "#rolesPermissionsForm\\:userGroupsAccess",
+      );
       if (await accessTable.isVisible({ timeout: 5000 }).catch(() => false)) {
-        expect(await accessTable.textContent()).toContain(":authenticated-users");
+        expect(await accessTable.textContent()).toContain(
+          ":authenticated-users",
+        );
       } else {
-        console.log("Info: No file access table — dataset has no restricted files.");
+        console.log(
+          "Info: No file access table — dataset has no restricted files.",
+        );
       }
     },
   );
@@ -248,14 +269,20 @@ test.describe.serial("Dataset & File Permissions Management", () => {
     { tag: ["@standard"] },
     async ({ page }) => {
       await goToFilePerms(page);
-      const accessTable = page.locator("#rolesPermissionsForm\\:userGroupsAccess");
-      if (!(await accessTable.isVisible({ timeout: 5000 }).catch(() => false))) {
+      const accessTable = page.locator(
+        "#rolesPermissionsForm\\:userGroupsAccess",
+      );
+      if (
+        !(await accessTable.isVisible({ timeout: 5000 }).catch(() => false))
+      ) {
         console.log("Info: No file access table — skipping revoke.");
         return;
       }
       const txt = await accessTable.textContent();
       if (!txt?.includes(":authenticated-users")) {
-        console.log("Info: :authenticated-users not in table — nothing to revoke.");
+        console.log(
+          "Info: :authenticated-users not in table — nothing to revoke.",
+        );
         return;
       }
       const removeLink = page.locator(
@@ -271,9 +298,9 @@ test.describe.serial("Dataset & File Permissions Management", () => {
       await expect(confirmDialog).toBeVisible({ timeout: 10000 });
       await confirmDialog.getByRole("button", { name: "Continue" }).click();
       await page.waitForTimeout(1500);
-      expect(await accessTable.textContent({ timeout: 10000 }))
-        .not.toContain(":authenticated-users");
+      expect(await accessTable.textContent({ timeout: 10000 })).not.toContain(
+        ":authenticated-users",
+      );
     },
   );
 });
-

@@ -46,19 +46,34 @@ test.describe.serial("Dataset Curation Workflow", () => {
     await page.getByRole("link", { name: "New Dataset" }).click();
     await page.waitForLoadState("domcontentloaded");
 
-    await page.locator('[id$=":0:inputText"]').first().fill(WORKFLOW_DATASET_TITLE);
-    await page.locator('[id$=":0:description"]').first()
+    await page
+      .locator('[id$=":0:inputText"]')
+      .first()
+      .fill(WORKFLOW_DATASET_TITLE);
+    await page
+      .locator('[id$=":0:description"]')
+      .first()
       .fill("Temporary dataset for curation workflow tests.");
 
-    await page.locator(".ui-selectcheckboxmenu-multiple-container").first().click();
-    await page.locator(".ui-selectcheckboxmenu-items-wrapper").first()
-      .getByText("Other").click();
-    await page.locator(".ui-selectcheckboxmenu-multiple-container").first().click();
+    await page
+      .locator(".ui-selectcheckboxmenu-multiple-container")
+      .first()
+      .click();
+    await page
+      .locator(".ui-selectcheckboxmenu-items-wrapper")
+      .first()
+      .getByText("Other")
+      .click();
+    await page
+      .locator(".ui-selectcheckboxmenu-multiple-container")
+      .first()
+      .click();
 
     await page.getByRole("button", { name: "Save Dataset" }).click();
     await page.waitForLoadState("domcontentloaded");
-    await expect(page.getByText("This dataset has been created."))
-      .toBeVisible({ timeout: 30000 });
+    await expect(page.getByText("This dataset has been created.")).toBeVisible({
+      timeout: 30000,
+    });
 
     datasetUrl = page.url();
     await context.close();
@@ -83,8 +98,10 @@ test.describe.serial("Dataset Curation Workflow", () => {
       const deleteLink = page.locator("#datasetForm\\:deleteDataset");
       if (await deleteLink.isVisible({ timeout: 3000 }).catch(() => false)) {
         await deleteLink.click();
-        await page.locator("#datasetForm\\:deleteConfirmation")
-          .getByRole("button", { name: "Continue" }).click();
+        await page
+          .locator("#datasetForm\\:deleteConfirmation")
+          .getByRole("button", { name: "Continue" })
+          .click();
       }
       await context.close();
     } catch {
@@ -103,20 +120,33 @@ test.describe.serial("Dataset Curation Workflow", () => {
       const submitBtn = page.locator("a.btn-publish:not(.dropdown-toggle)");
       const publishToggle = page.locator("a.btn-publish.dropdown-toggle");
 
-      const isContributor = await submitBtn.isVisible({ timeout: 5000 }).catch(() => false);
+      const isContributor = await submitBtn
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
 
       if (isContributor) {
         await submitBtn.click();
-        const submitDialog = page.locator("#datasetForm\\:inreview");
-        await expect(submitDialog).toBeVisible({ timeout: 10000 });
-        await submitDialog.locator("button:not(.btn-link)").click();
+        // PrimeFaces sets aria-hidden="true" on closed dialogs — waitFor handles this correctly
+        await page
+          .locator("#datasetForm\\:inreview")
+          .waitFor({ state: "visible", timeout: 10000 });
+        await page
+          .locator("#datasetForm\\:inreview")
+          .locator("button:not(.btn-link)")
+          .click();
         await expect(submitBtn).not.toBeVisible({ timeout: 15000 });
-        await expect(page.locator(".label.inreview")).toBeVisible({ timeout: 10000 });
+        await expect(page.locator(".label.inreview")).toBeVisible({
+          timeout: 10000,
+        });
       } else {
         // Admin sees the publish dropdown — publish directly (covers #82 as well)
-        const toggleVisible = await publishToggle.isVisible({ timeout: 5000 }).catch(() => false);
+        const toggleVisible = await publishToggle
+          .isVisible({ timeout: 5000 })
+          .catch(() => false);
         if (!toggleVisible) {
-          console.log("Info: Neither Submit for Review nor Publish toggle found.");
+          console.log(
+            "Info: Neither Submit for Review nor Publish toggle found.",
+          );
           return;
         }
         await publishToggle.click();
@@ -125,9 +155,10 @@ test.describe.serial("Dataset Curation Workflow", () => {
         );
         await expect(publishItem).toBeVisible({ timeout: 10000 });
         await publishItem.click();
-        const publishDialog = page.locator("#datasetForm\\:publishDataset");
-        await expect(publishDialog).toBeVisible({ timeout: 10000 });
-        await publishDialog.locator("#datasetForm\\:releaseDatasetButton").click();
+        await page
+          .locator("#datasetForm\\:publishDataset")
+          .waitFor({ state: "visible", timeout: 10000 });
+        await page.locator("#datasetForm\\:releaseDatasetButton").click();
         await page.waitForFunction(
           () => !window.location.href.includes("version=DRAFT"),
           { timeout: 30000 },
@@ -146,8 +177,12 @@ test.describe.serial("Dataset Curation Workflow", () => {
       await page.waitForLoadState("domcontentloaded");
 
       const inReviewBadge = page.locator(".label.inreview");
-      if (!(await inReviewBadge.isVisible({ timeout: 5000 }).catch(() => false))) {
-        console.log("Info: Dataset not In Review — skipping Return to Author test.");
+      if (
+        !(await inReviewBadge.isVisible({ timeout: 5000 }).catch(() => false))
+      ) {
+        console.log(
+          "Info: Dataset not In Review — skipping Return to Author test.",
+        );
         return;
       }
 
@@ -161,8 +196,10 @@ test.describe.serial("Dataset Curation Workflow", () => {
       await expect(returnItem).toBeVisible({ timeout: 10000 });
       await returnItem.click();
 
+      await page
+        .locator("#datasetForm\\:sendBackToContributor")
+        .waitFor({ state: "visible", timeout: 10000 });
       const returnDialog = page.locator("#datasetForm\\:sendBackToContributor");
-      await expect(returnDialog).toBeVisible({ timeout: 10000 });
 
       const reasonField = returnDialog.locator("#datasetForm\\:returnReason");
       await expect(reasonField).toBeVisible({ timeout: 10000 });
@@ -171,7 +208,9 @@ test.describe.serial("Dataset Curation Workflow", () => {
       await returnDialog.locator("button:not(.btn-link)").click();
 
       await expect(inReviewBadge).not.toBeVisible({ timeout: 15000 });
-      await expect(page.locator(".label.draft")).toBeVisible({ timeout: 10000 });
+      await expect(page.locator(".label.draft")).toBeVisible({
+        timeout: 10000,
+      });
     },
   );
 
@@ -185,23 +224,36 @@ test.describe.serial("Dataset Curation Workflow", () => {
 
       const draftBadge = page.locator(".label.draft");
       const submitBtn = page.locator("a.btn-publish:not(.dropdown-toggle)");
-      const isDraft = await draftBadge.isVisible({ timeout: 5000 }).catch(() => false);
+      const isDraft = await draftBadge
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
       if (!isDraft) {
         console.log("Info: Dataset not in Draft — skipping resubmit.");
         return;
       }
-      const hasSubmit = await submitBtn.isVisible({ timeout: 3000 }).catch(() => false);
+      const hasSubmit = await submitBtn
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
       if (!hasSubmit) {
-        console.log("Info: No Submit for Review button (admin account) — skipping resubmit.");
+        console.log(
+          "Info: No Submit for Review button (admin account) — skipping resubmit.",
+        );
         return;
       }
 
       await submitBtn.click();
-      const submitDialog = page.locator("#datasetForm\\:inreview");
-      await expect(submitDialog).toBeVisible({ timeout: 10000 });
-      await submitDialog.locator("button:not(.btn-link)").click();
+      // PrimeFaces sets aria-hidden="true" on closed dialogs — waitFor handles this correctly
+      await page
+        .locator("#datasetForm\\:inreview")
+        .waitFor({ state: "visible", timeout: 10000 });
+      await page
+        .locator("#datasetForm\\:inreview")
+        .locator("button:not(.btn-link)")
+        .click();
       await expect(submitBtn).not.toBeVisible({ timeout: 15000 });
-      await expect(page.locator(".label.inreview")).toBeVisible({ timeout: 10000 });
+      await expect(page.locator(".label.inreview")).toBeVisible({
+        timeout: 10000,
+      });
     },
   );
 
@@ -225,7 +277,9 @@ test.describe.serial("Dataset Curation Workflow", () => {
       }
 
       const publishToggle = page.locator("a.btn-publish.dropdown-toggle");
-      const toggleVisible = await publishToggle.isVisible({ timeout: 5000 }).catch(() => false);
+      const toggleVisible = await publishToggle
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
       if (!toggleVisible) {
         console.log("Info: No Publish toggle visible — skipping publish step.");
         return;
@@ -238,9 +292,10 @@ test.describe.serial("Dataset Curation Workflow", () => {
       await expect(publishItem).toBeVisible({ timeout: 10000 });
       await publishItem.click();
 
-      const publishDialog = page.locator("#datasetForm\\:publishDataset");
-      await expect(publishDialog).toBeVisible({ timeout: 10000 });
-      await publishDialog.locator("#datasetForm\\:releaseDatasetButton").click();
+      await page
+        .locator("#datasetForm\\:publishDataset")
+        .waitFor({ state: "visible", timeout: 10000 });
+      await page.locator("#datasetForm\\:releaseDatasetButton").click();
 
       // Wait for the URL to no longer include DRAFT and a version badge to appear
       await page.waitForFunction(
@@ -249,9 +304,12 @@ test.describe.serial("Dataset Curation Workflow", () => {
       );
 
       // Draft and In Review badges should be absent
-      await expect(page.locator(".label.draft")).not.toBeVisible({ timeout: 10000 });
-      await expect(page.locator(".label.inreview")).not.toBeVisible({ timeout: 5000 });
+      await expect(page.locator(".label.draft")).not.toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.locator(".label.inreview")).not.toBeVisible({
+        timeout: 5000,
+      });
     },
   );
 });
-
