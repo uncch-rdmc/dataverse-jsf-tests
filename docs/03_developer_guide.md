@@ -400,37 +400,84 @@ each adapter drives, and how Duo 2FA and session-cookie persistence work.
 
 ---
 
-## 5. This Repo Has No CI/CD Pipeline of Its Own — It Runs Upstream
+## 5. Where This Suite Actually Fits: Repo Lineage and CI/CD
 
-Worth stating plainly, since older commit messages could be read otherwise:
-**there is no GitHub Actions workflow (or any other CI system) in this
+**There is no GitHub Actions workflow (or any other CI system) in *this*
 repository that runs the Playwright suite.** `.github/workflows/` does not
-exist here. This repo is distributed by cloning it directly (Section 1
-above) — it is **not** an npm package, and nothing here is published to the
-npm registry.
+exist here, and this repo is not an npm package — nothing here is published
+to the npm registry, and it's distributed by cloning it directly (Section 1
+above).
 
-The CI/CD that actually executes these tests lives **upstream**: an upstream
-pipeline pulls this repo and runs the suite against its own target
-deployment as part of its own process. If you're extending this suite,
-assume your changes will eventually be run by that upstream pipeline, not by
-anything configured in this repository.
+### Repo lineage
 
-That also explains commit messages like
+Three repositories are involved, and it's important to keep them straight:
+
+| Repo | Role |
+|---|---|
+| `uncch-rdmc/dataverse-jsf-tests` (this repo) | A UNC-maintained prototype/staging fork — where new tests are drafted before being merged upstream into the canonical suite. |
+| [`gdcc/dataverse-jsf-tests`](https://github.com/gdcc/dataverse-jsf-tests) | The **canonical upstream test suite**, maintained by the Global Dataverse Community Consortium. This is the copy that CI actually runs (see below) — **not** this fork. |
+| [`IQSS/dataverse`](https://github.com/IQSS/dataverse) | The Dataverse application itself. Its own CI checks out `gdcc/dataverse-jsf-tests` and runs it against a freshly-built copy of the application, on every push/PR to `develop`/`master`. |
+
+**Practical implication:** a change made in this fork is not exercised by
+IQSS's CI until it is merged into `gdcc/dataverse-jsf-tests`. Treat this repo
+as pre-upstream staging, not as the thing CI is actually testing.
+
+As of this writing, `gdcc/dataverse-jsf-tests` has the same 22 spec files as
+this fork (verified directly), so [`TEST_SPECIFICATIONS.md`](TEST_SPECIFICATIONS.md)
+describes what that upstream CI run actually exercises. One divergence to be
+aware of if/when this fork is merged upstream: `gdcc/dataverse-jsf-tests`'s
+`package.json` still uses the old `"kunai-runner"` package name that this
+fork has since dropped (see the note at the end of this section) — that
+rename hasn't propagated upstream and will need reconciling at merge time.
+
+### The actual CI/CD workflow
+
+Lives in the **`IQSS/dataverse`** repo (not here, not in `gdcc/dataverse-jsf-tests`)
+at **`.github/workflows/dataverse_jsf_tests.yml`**. It triggers on
+`workflow_dispatch`, and on push/PR to `develop` or `master` (ignoring
+doc-only changes). In order, it:
+
+1. Builds Dataverse itself from source via Maven (`mvn -Pct package`, using/building the `container-base` image)
+2. Starts the full stack with `mvn -Pct docker:start` — the Dataverse/Payara app container (`dev_dataverse`), Postgres, Solr, and a LocalStack S3 stand-in
+3. Polls `http://localhost:8080/api/info/version` until the API reports ready
+4. Configures the fresh instance via the admin settings API: `:BuiltinUsersKey=burrito`, `:ProvCollectionEnabled=true`, `:AllowApiTokenLookupViaApi=true`, `:AllowSignUp=true`
+5. Checks out **`gdcc/dataverse-jsf-tests`** into a subdirectory, runs `npm ci` (not `npm install` — deterministic, lockfile-only) and `npx playwright install --with-deps`
+6. Runs `npx playwright test` against that freshly-built instance with this exact environment — a known-good reference config, useful if you want to point your own local Docker-based Dataverse instance at this suite the same way CI does:
+
+   ```dotenv
+   BASE_URL=http://localhost:8080
+   LOGIN_ADAPTER=builtin
+   DV_USERNAME=dataverseAdmin
+   DV_PASSWORD=admin1
+   DV_FULL_NAME=Dataverse Admin
+   ROOT_DATAVERSE=/dataverse/root
+   SKIP_PREFLIGHT=true
+   ```
+
+   This is also why `01-preflight.spec.ts` (which asserts UNC-specific
+   branding) would fail there without `SKIP_PREFLIGHT=true`, and why the
+   root collection is `/dataverse/root` rather than UNC's `/dataverse/unc` —
+   `/dataverse/root` is the vanilla Dataverse Docker image's default
+   top-level collection.
+7. On every run (pass or fail), uploads the Playwright HTML report and every
+   container's Docker logs as workflow artifacts — check those first when a
+   CI run fails and you can't reproduce it locally.
+
+This also explains commit messages like
 `perf(config): bump slowMo to 2500ms for CI stability` — they're stabilizing
-runs against whatever target instance the upstream pipeline points `BASE_URL`
-at (e.g. a Docker-based deployment — see the reference in
-[`backlog.md`](backlog.md)), not tuning a pipeline that lives in this repo.
-If you're pointing `BASE_URL` at a CI/Docker-hosted instance yourself for
-local debugging, expect to also need `SKIP_PREFLIGHT=true` (no UNC branding)
-and `LOGIN_ADAPTER=builtin` (no institutional SSO), and expect
-`LOCALLY_FAIR_ENABLED` and possibly `CUSTOM_LICENSE_ENABLED` to stay `false`
-since those UNC-specific features are unlikely to be enabled there.
+runs against that IQSS-CI-hosted instance, not tuning a pipeline in this
+repo.
 
-This repo previously had an *npm-publishing* workflow
-(`.github/workflows/publish.yml`) and a versioning scheme to go with it, both
-removed in commit `1bf495f` ("remove npm publishing infrastructure;
-distribute via git clone only") — the versioning doc that described it has
-since been deleted from `docs/` as no longer applicable.
+### This repo previously had its own (unrelated) CI/CD
+
+Separately from all of the above: this repo once had a GitHub Actions
+workflow of its own — an **npm-publishing** workflow
+(`.github/workflows/publish.yml`), deleted in commit `1bf495f` ("remove npm
+publishing infrastructure; distribute via git clone only"), along with the
+npm-package identity in `package.json` and a versioning doc that described
+that release process. None of it is related to the IQSS/gdcc pipeline
+described above — it was this repo trying to publish itself as an installable
+package, which is no longer how it's distributed.
 
 ---
 
