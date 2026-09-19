@@ -15,3 +15,20 @@ dataverse-jsf-tests is the foundational open-source automation engine and testin
 5. `npm install`
 6. `npx playwright install`
 7. `npx playwright test`
+
+For anything past "it runs" — running only a specific test or browser,
+Playwright's headed/debug/trace tooling, the full environment variable
+reference, and setup troubleshooting — see
+[`docs/03_developer_guide.md`](docs/03_developer_guide.md).
+
+## Documentation Index
+
+| Doc | Covers |
+|---|---|
+| [`docs/03_developer_guide.md`](docs/03_developer_guide.md) | Clone/setup/run, running specific tests and browsers, Playwright feature tour (headed mode, UI mode, trace viewer, codegen), full environment variable reference, CI/CD context, troubleshooting |
+| [`docs/TEST_SPECIFICATIONS.md`](docs/TEST_SPECIFICATIONS.md) | Plain-English description of every test, grouped by `@standard` / `@21cfr` / `@regression` |
+| [`docs/01_shibboleth_auth.md`](docs/01_shibboleth_auth.md) | Login adapters, Duo 2FA, session-cookie persistence |
+| [`docs/02_versioning_and_release.md`](docs/02_versioning_and_release.md) | ⚠️ Describes an npm-publish release workflow that was removed from this repo (see the developer guide, §5) — kept for history only |
+| [`docs/backlog.md`](docs/backlog.md) | Test cases deferred, blocked, or ruled out as not automatable |
+| [`docs/test_data.md`](docs/test_data.md) | Why the fixture files in `tests/suite/test-data/` exist |
+| [`docs/combine_videos.md`](docs/combine_videos.md) | Stitching per-test failure videos into one MP4 |
