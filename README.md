@@ -1,7 +1,7 @@
 # dataverse-jsf-tests
 High-performance Dataverse Playwright frontend testing framework and E2E automation scaffolding.
 
-dataverse-jsf-tests is the foundational open-source automation engine and testing scaffolding for IQSS Dataverse. Built for speed, reliability, and developer ergonomics, it provides the core test runner, DOM assertion utilities, and CI/CD integration pipelines needed to validate complex frontend architectures. Designed to be highly extensible, it serves as the close-quarters framework for writing, structuring, and executing robust end-to-end web UI tests.
+dataverse-jsf-tests is the foundational open-source automation engine and testing scaffolding for IQSS Dataverse. Built for speed, reliability, and developer ergonomics, it provides the core test runner and DOM assertion utilities needed to validate complex frontend architectures. This repo has no CI/CD pipeline of its own — it's pulled and run by CI/CD upstream. Designed to be highly extensible, it serves as the close-quarters framework for writing, structuring, and executing robust end-to-end web UI tests.
 
 ## Steps to Use Dataverse JSF Tests
 1. Clone the git repository into an empty folder
@@ -28,7 +28,6 @@ reference, and setup troubleshooting — see
 | [`docs/03_developer_guide.md`](docs/03_developer_guide.md) | Clone/setup/run, running specific tests and browsers, Playwright feature tour (headed mode, UI mode, trace viewer, codegen), full environment variable reference, CI/CD context, troubleshooting |
 | [`docs/TEST_SPECIFICATIONS.md`](docs/TEST_SPECIFICATIONS.md) | Plain-English description of every test, grouped by `@standard` / `@21cfr` / `@regression` |
 | [`docs/01_shibboleth_auth.md`](docs/01_shibboleth_auth.md) | Login adapters, Duo 2FA, session-cookie persistence |
-| [`docs/02_versioning_and_release.md`](docs/02_versioning_and_release.md) | ⚠️ Describes an npm-publish release workflow that was removed from this repo (see the developer guide, §5) — kept for history only |
 | [`docs/backlog.md`](docs/backlog.md) | Test cases deferred, blocked, or ruled out as not automatable |
 | [`docs/test_data.md`](docs/test_data.md) | Why the fixture files in `tests/suite/test-data/` exist |
 | [`docs/combine_videos.md`](docs/combine_videos.md) | Stitching per-test failure videos into one MP4 |

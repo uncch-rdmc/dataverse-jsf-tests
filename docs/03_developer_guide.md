@@ -28,8 +28,8 @@ adapters, see [`01_shibboleth_auth.md`](01_shibboleth_auth.md).
 
 ```bash
 # 1. Clone into an empty folder
-git clone https://github.com/uncch-rdmc/kunai-runner.git
-cd kunai-runner   # the folder containing playwright.config.ts
+git clone https://github.com/uncch-rdmc/dataverse-jsf-tests.git
+cd dataverse-jsf-tests   # the folder containing playwright.config.ts
 
 # 2. Install npm dependencies
 npm install
@@ -400,32 +400,37 @@ each adapter drives, and how Duo 2FA and session-cookie persistence work.
 
 ---
 
-## 5. This Repo Has No Test-Running CI/CD Pipeline
+## 5. This Repo Has No CI/CD Pipeline of Its Own — It Runs Upstream
 
-Worth stating plainly, since older commit messages and docs reference CI:
-**there is currently no GitHub Actions workflow (or any other CI system) in
-this repository that runs the Playwright suite.** `.github/workflows/` does
-not exist here.
+Worth stating plainly, since older commit messages could be read otherwise:
+**there is no GitHub Actions workflow (or any other CI system) in this
+repository that runs the Playwright suite.** `.github/workflows/` does not
+exist here. This repo is distributed by cloning it directly (Section 1
+above) — it is **not** an npm package, and nothing here is published to the
+npm registry.
 
-What *did* exist, and was removed, was an **npm-publishing** workflow
-(`.github/workflows/publish.yml`), deleted in commit `1bf495f`
-("remove npm publishing infrastructure; distribute via git clone only").
-[`02_versioning_and_release.md`](02_versioning_and_release.md) still
-describes that npm/dist-tag release process in detail — treat it as
-**historical/stale** unless someone reinstates the publish workflow; the
-current, actually-supported distribution method is the clone-and-run process
-in Section 1 above.
+The CI/CD that actually executes these tests lives **upstream**: an upstream
+pipeline pulls this repo and runs the suite against its own target
+deployment as part of its own process. If you're extending this suite,
+assume your changes will eventually be run by that upstream pipeline, not by
+anything configured in this repository.
 
-Commit messages like `perf(config): bump slowMo to 2500ms for CI stability`
-refer to stabilizing runs against a **CI-hosted target Dataverse instance**
-(e.g. the Docker-based deployment IQSS's own GitHub Actions uses to test
-Dataverse itself — see the reference in [`backlog.md`](backlog.md)), not to
-this repo running its own pipeline. If you're pointing `BASE_URL` at such a
-CI/Docker-hosted instance rather than a real UNC deployment, expect to also
-need `SKIP_PREFLIGHT=true` (no UNC branding) and `LOGIN_ADAPTER=builtin`
-(no institutional SSO), and expect `LOCALLY_FAIR_ENABLED` and possibly
-`CUSTOM_LICENSE_ENABLED` to stay `false` since those UNC-specific features
-are unlikely to be enabled there.
+That also explains commit messages like
+`perf(config): bump slowMo to 2500ms for CI stability` — they're stabilizing
+runs against whatever target instance the upstream pipeline points `BASE_URL`
+at (e.g. a Docker-based deployment — see the reference in
+[`backlog.md`](backlog.md)), not tuning a pipeline that lives in this repo.
+If you're pointing `BASE_URL` at a CI/Docker-hosted instance yourself for
+local debugging, expect to also need `SKIP_PREFLIGHT=true` (no UNC branding)
+and `LOGIN_ADAPTER=builtin` (no institutional SSO), and expect
+`LOCALLY_FAIR_ENABLED` and possibly `CUSTOM_LICENSE_ENABLED` to stay `false`
+since those UNC-specific features are unlikely to be enabled there.
+
+This repo previously had an *npm-publishing* workflow
+(`.github/workflows/publish.yml`) and a versioning scheme to go with it, both
+removed in commit `1bf495f` ("remove npm publishing infrastructure;
+distribute via git clone only") — the versioning doc that described it has
+since been deleted from `docs/` as no longer applicable.
 
 ---
 
